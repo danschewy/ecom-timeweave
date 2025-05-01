@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import Cart from "@/components/Cart";
+import ProductModal from "@/components/ProductModal";
 
 interface Product {
   id: number;
@@ -28,6 +29,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState("products");
   const [error, setError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productReviews, setProductReviews] = useState<Review[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/products")
@@ -75,6 +79,24 @@ export default function Home() {
 
   const handleAddToCart = (productId: number) => {
     setCartCount((prev) => prev + 1);
+  };
+
+  const handleProductClick = async (product: Product) => {
+    try {
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(product.name)}&type=reviews`
+      );
+      if (!res.ok) {
+        throw new Error(`Failed to fetch reviews: ${res.status}`);
+      }
+      const reviews = await res.json();
+      setProductReviews(reviews);
+      setSelectedProduct(product);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+      setError("Failed to load reviews. Please try again.");
+    }
   };
 
   if (loading) {
@@ -171,11 +193,16 @@ export default function Home() {
               }}
             >
               {products.map((product) => (
-                <ProductCard
+                <div
                   key={product.id}
-                  product={product}
-                  onAddToCart={handleAddToCart}
-                />
+                  onClick={() => handleProductClick(product)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <ProductCard
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -230,6 +257,13 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <ProductModal
+        product={selectedProduct}
+        reviews={productReviews}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
 
       <style jsx>{`
         @keyframes spin {
