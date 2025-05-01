@@ -48,9 +48,11 @@ export async function GET(request: Request) {
     } else if (type === "reviews") {
       // Regular text search for reviews
       const result = await pgPool.query(
-        `SELECT * FROM reviews 
-         WHERE content ILIKE $1 
-         ORDER BY created_at DESC`,
+        `SELECT r.*, p.name as product_name 
+         FROM reviews r
+         JOIN products p ON r.product_id = p.id
+         WHERE r.content ILIKE $1 
+         ORDER BY r.created_at DESC`,
         [`%${query}%`]
       );
       return NextResponse.json(result.rows);

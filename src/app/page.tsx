@@ -13,10 +13,21 @@ interface Product {
   image_url: string;
 }
 
+interface Review {
+  id: number;
+  content: string;
+  rating: number;
+  created_at: string;
+  product_name: string;
+}
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [searchType, setSearchType] = useState("products");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -27,21 +38,37 @@ export default function Home() {
       });
   }, []);
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string, type: string) => {
     setLoading(true);
+    setError(null);
+    setSearchType(type);
+
     try {
-      console.log("Searching for:", query);
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      console.log("Searching for:", query, "type:", type);
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(query)}&type=${type}`
+      );
       if (!res.ok) {
         throw new Error(`Search failed with status: ${res.status}`);
       }
       const data = await res.json();
       console.log("Search results:", data);
-      setProducts(data);
+
+      if (type === "products") {
+        setProducts(data);
+        setReviews([]);
+      } else {
+        setReviews(data);
+        setProducts([]);
+      }
     } catch (error) {
       console.error("Search error:", error);
-      // Show error state to user
-      setProducts([]);
+      setError("Failed to perform search. Please try again.");
+      if (type === "products") {
+        setProducts([]);
+      } else {
+        setReviews([]);
+      }
     }
     setLoading(false);
   };
@@ -112,33 +139,96 @@ export default function Home() {
           <SearchBar onSearch={handleSearch} />
         </div>
 
-        <div>
-          <h2
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: "600",
-              marginBottom: "1rem",
-              color: "#111827",
-            }}
-          >
-            Products
-          </h2>
+        {error && (
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "1rem",
+              textAlign: "center",
+              color: "#EF4444",
+              marginBottom: "1rem",
             }}
           >
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {error}
           </div>
-        </div>
+        )}
+
+        {searchType === "products" ? (
+          <div>
+            <h2
+              style={{
+                fontSize: "1.125rem",
+                fontWeight: "600",
+                marginBottom: "1rem",
+                color: "#111827",
+              }}
+            >
+              Products
+            </h2>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "1rem",
+              }}
+            >
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h2
+              style={{
+                fontSize: "1.125rem",
+                fontWeight: "600",
+                marginBottom: "1rem",
+                color: "#111827",
+              }}
+            >
+              Reviews
+            </h2>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+            >
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  style={{
+                    backgroundColor: "white",
+                    padding: "1rem",
+                    borderRadius: "0.5rem",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    <div style={{ fontWeight: "500" }}>
+                      Rating: {review.rating}/5
+                    </div>
+                    <div style={{ color: "#6B7280" }}>
+                      {new Date(review.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <p style={{ color: "#374151", marginBottom: "0.5rem" }}>
+                    {review.content}
+                  </p>
+                  <p style={{ color: "#6B7280", fontSize: "0.875rem" }}>
+                    Product: {review.product_name}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       <style jsx>{`
