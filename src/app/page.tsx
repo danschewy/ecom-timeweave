@@ -42,6 +42,33 @@ export default function Home() {
       });
   }, []);
 
+  const handleProductClick = async (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+
+    try {
+      const res = await fetch(`/api/reviews?productId=${product.id}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch reviews: ${res.status}`);
+      }
+      const reviewsData = await res.json();
+      setProductReviews(reviewsData);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      setProductReviews([]);
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+    setProductReviews([]);
+  };
+
+  const handleAddToCart = (productId: number) => {
+    setCartCount((prev) => prev + 1);
+  };
+
   const handleSearch = async (query: string, type: string) => {
     setLoading(true);
     setError(null);
@@ -75,28 +102,6 @@ export default function Home() {
       }
     }
     setLoading(false);
-  };
-
-  const handleAddToCart = (productId: number) => {
-    setCartCount((prev) => prev + 1);
-  };
-
-  const handleProductClick = async (product: Product) => {
-    try {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(product.name)}&type=reviews`
-      );
-      if (!res.ok) {
-        throw new Error(`Failed to fetch reviews: ${res.status}`);
-      }
-      const reviews = await res.json();
-      setProductReviews(reviews);
-      setSelectedProduct(product);
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error("Failed to fetch reviews:", error);
-      setError("Failed to load reviews. Please try again.");
-    }
   };
 
   if (loading) {
@@ -173,7 +178,17 @@ export default function Home() {
           </div>
         )}
 
-        {searchType === "products" ? (
+        {loading ? (
+          <div
+            style={{
+              textAlign: "center",
+              color: "#6B7280",
+              marginTop: "2rem",
+            }}
+          >
+            Loading...
+          </div>
+        ) : searchType === "products" ? (
           <div>
             <h2
               style={{
@@ -245,10 +260,14 @@ export default function Home() {
                       {new Date(review.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <p style={{ color: "#374151", marginBottom: "0.5rem" }}>
-                    {review.content}
-                  </p>
-                  <p style={{ color: "#6B7280", fontSize: "0.875rem" }}>
+                  <p style={{ color: "#4B5563" }}>{review.content}</p>
+                  <p
+                    style={{
+                      color: "#6B7280",
+                      fontSize: "0.875rem",
+                      marginTop: "0.5rem",
+                    }}
+                  >
                     Product: {review.product_name}
                   </p>
                 </div>
@@ -262,7 +281,7 @@ export default function Home() {
         product={selectedProduct}
         reviews={productReviews}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
       />
 
       <style jsx>{`

@@ -17,6 +17,11 @@ export default function ProductCard({
   product,
   onAddToCart,
 }: ProductCardProps) {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent modal from opening
+    onAddToCart(product.id);
+  };
+
   return (
     <div
       style={{
@@ -91,7 +96,7 @@ export default function ProductCard({
             ${product.price.toFixed(2)}
           </span>
           <button
-            onClick={() => onAddToCart(product.id)}
+            onClick={handleAddToCart}
             style={{
               backgroundColor: "#3B82F6",
               color: "white",

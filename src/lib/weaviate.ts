@@ -36,7 +36,9 @@ export async function semanticSearch(query: string) {
     const client = await getClient();
     const productsCollection = client.collections.get("Products");
 
-    const result = await productsCollection.query.nearText(query);
+    const result = await productsCollection.query.nearText(query, {
+      autoLimit: 1,
+    });
     console.log("Raw Weaviate response:", JSON.stringify(result, null, 2));
 
     if (!result.objects || result.objects.length === 0) {

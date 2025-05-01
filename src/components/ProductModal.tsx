@@ -31,6 +31,18 @@ export default function ProductModal({
 }: ProductModalProps) {
   if (!isOpen || !product) return null;
 
+  const handleModalClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent clicks inside modal from closing it
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <div
       style={{
@@ -38,16 +50,10 @@ export default function ProductModal({
         inset: 0,
         zIndex: 50,
         overflowY: "auto",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
       }}
+      onClick={onClose}
     >
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-        }}
-        onClick={onClose}
-      />
       <div
         style={{
           display: "flex",
@@ -58,6 +64,7 @@ export default function ProductModal({
         }}
       >
         <div
+          onClick={handleModalClick}
           style={{
             position: "relative",
             width: "100%",
@@ -76,6 +83,10 @@ export default function ProductModal({
               top: "1rem",
               color: "#9CA3AF",
               cursor: "pointer",
+              border: "none",
+              background: "none",
+              fontSize: "1.25rem",
+              padding: "0.5rem",
             }}
           >
             ✕
@@ -141,52 +152,63 @@ export default function ProductModal({
                 color: "#111827",
               }}
             >
-              Reviews
+              Reviews ({reviews.length})
             </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  style={{
-                    borderBottom: "1px solid #E5E7EB",
-                    paddingBottom: "1rem",
-                  }}
-                >
+            {reviews.length === 0 ? (
+              <p style={{ color: "#6B7280", fontStyle: "italic" }}>
+                No reviews yet for this product.
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                  maxHeight: "400px",
+                  overflowY: "auto",
+                  padding: "0.5rem",
+                }}
+              >
+                {reviews.map((review) => (
                   <div
+                    key={review.id}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      marginBottom: "0.5rem",
+                      backgroundColor: "#F9FAFB",
+                      borderRadius: "0.5rem",
+                      padding: "1rem",
+                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                     }}
                   >
-                    <div style={{ display: "flex" }}>
-                      {[...Array(5)].map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          style={{
-                            width: "1.25rem",
-                            height: "1.25rem",
-                            color: i < review.rating ? "#FBBF24" : "#D1D5DB",
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <span
+                    <div
                       style={{
-                        fontSize: "0.875rem",
-                        color: "#6B7280",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        marginBottom: "0.5rem",
                       }}
                     >
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </span>
+                      <div style={{ display: "flex" }}>
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon
+                            key={i}
+                            style={{
+                              width: "1.25rem",
+                              height: "1.25rem",
+                              fill: i < review.rating ? "#FBBF24" : "none",
+                              color: i < review.rating ? "#FBBF24" : "#D1D5DB",
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div style={{ color: "#6B7280", fontSize: "0.875rem" }}>
+                        {formatDate(review.created_at)}
+                      </div>
+                    </div>
+                    <p style={{ color: "#4B5563" }}>{review.content}</p>
                   </div>
-                  <p style={{ color: "#374151" }}>{review.content}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
